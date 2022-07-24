@@ -3,10 +3,11 @@ import React from "react";
 import { connect } from "react-redux";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import { useDispatch } from "react-redux";
-import { bankCheckedStatusUpdate } from "./redux/nearByBanks";
+import { bankCheckedStatusUpdate } from "../redux/nearByBanks";
 
 function UserVisitedBankDetails(props) {
   const dispatch = useDispatch();
+
   // calculate screen width
   const screenWidth = window.innerWidth;
 

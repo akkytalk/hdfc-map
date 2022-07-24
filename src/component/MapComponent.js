@@ -8,15 +8,14 @@ import {
 } from "@react-google-maps/api";
 import { CircularProgress } from "@mui/material";
 import { IconButton } from "@mui/material";
-import NearMeIcon from "@mui/icons-material/NearMe";
 import { Card } from "reactstrap";
 import SearchIcon from "@mui/icons-material/Search";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 import FormControlLabel from "@mui/material/FormControlLabel";
-import SwitchInput from "./component/SwitchInput";
+import SwitchInput from "./SwitchInput";
 import { connect } from "react-redux";
 import { useDispatch } from "react-redux";
-import { removeBankData, setBank } from "./redux/nearByBanks";
+import { removeBankData, setBank } from "../redux/nearByBanks";
 
 function MapComponent(props) {
   const { isLoaded } = useJsApiLoader({
@@ -169,14 +168,6 @@ function MapComponent(props) {
           >
             <MyLocationIcon color="info" />
           </IconButton>
-          {/* <IconButton
-            onClick={() => {
-              setLatitude(19.089119798005967);
-              setLongitude(72.88511843760794);
-            }}
-          >
-            <NearMeIcon color="info" />
-          </IconButton> */}
         </div>
       </Autocomplete>
       <div className="map">

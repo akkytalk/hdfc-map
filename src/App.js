@@ -11,8 +11,8 @@ import {
   Card,
 } from "reactstrap";
 import classnames from "classnames";
-import BankDetails from "./BankDetails";
-import UserVisitedBankDetails from "./UserVisitedBankDetails";
+import BankDetails from "./component/BankDetails";
+import UserVisitedBankDetails from "./component/UserVisitedBankDetails";
 
 function App() {
   const [activeTab, setActiveTab] = useState("tab1");
@@ -20,23 +20,6 @@ function App() {
   const toggle = (tab) => {
     if (activeTab !== tab) {
       setActiveTab(tab);
-    }
-  };
-
-  const withCurrentLocation = (callback) => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          // check if callback is a function
-          if (typeof callback === "function") {
-            const { latitude, longitude } = position.coords;
-            callback(latitude, longitude);
-          }
-        },
-        (error) => {
-          console.log(error);
-        }
-      );
     }
   };
 

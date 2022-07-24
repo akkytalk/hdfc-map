@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const clientSlice = createSlice({
+const bankSlice = createSlice({
   name: "Bank",
   initialState: {
     bank: [],
@@ -42,6 +42,6 @@ export const {
   getBankLoading,
   bankCheckedStatusUpdate,
   removeBankData,
-} = clientSlice.actions;
+} = bankSlice.actions;
 
-export default clientSlice.reducer;
+export default bankSlice.reducer;
