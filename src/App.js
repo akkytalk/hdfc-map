@@ -46,7 +46,7 @@ function App() {
 	};
 
 	const getNearbyBanks = async () => {
-        const query = `https://maps.googleapis.com/maps/api/geocode/json?address=1600+Amphitheatre+Parkway,+Mountain+View,+CA&key=AIzaSyC68H9SdF9KiJWStgwPugHIgY_IILwefRo`
+		const query = `https://maps.googleapis.com/maps/api/geocode/json?address=1600+Amphitheatre+Parkway,+Mountain+View,+CA&key=AIzaSyC68H9SdF9KiJWStgwPugHIgY_IILwefRo`;
 		withCurrentLocation((lat, lng) => {
 			let query =
 				"https://maps.googleapis.com/maps/api/place/nearbysearch/json?";
@@ -54,7 +54,7 @@ function App() {
 			query += "&radius=5000";
 			query += "&types=bank";
 			query += "&sensor=true";
-            query += "&name=hdfc";
+			query += "&name=hdfc";
 			query += "&key=" + process.env.REACT_APP_API_KEY;
 
 			console.log(query);
@@ -73,48 +73,48 @@ function App() {
 				Click Me
 			</button>
 
-			{/* <Nav justified pills>
-        <NavItem>
-          <NavLink
-            className={classnames({
-              active: activeTab === "tab1",
-            })}
-            onClick={() => {
-              toggle("tab1");
-            }}
-          >
-            TAB 1
-          </NavLink>
-        </NavItem>
-        <NavItem>
-          <NavLink
-            className={classnames({
-              active: activeTab === "tab2",
-            })}
-            onClick={() => {
-              toggle("tab2");
-            }}
-          >
-            TAB 2
-          </NavLink>
-        </NavItem>
-      </Nav>
-      <TabContent activeTab={activeTab}>
-        <TabPane tabId="tab1" className="bg-white h-100">
-          <Row>
-            <Col sm="12" className="p-4">
-              <BankDetails />
-            </Col>
-          </Row>
-        </TabPane>
-        <TabPane tabId="tab2" className="bg-white">
-          <Row>
-            <Col sm="12" className="p-4">
-              <UserVisitedBankDetails />
-            </Col>
-          </Row>
-        </TabPane>
-      </TabContent> */}
+			<Nav justified pills>
+				<NavItem>
+					<NavLink
+						className={classnames({
+							active: activeTab === "tab1",
+						})}
+						onClick={() => {
+							toggle("tab1");
+						}}
+					>
+						TAB 1
+					</NavLink>
+				</NavItem>
+				<NavItem>
+					<NavLink
+						className={classnames({
+							active: activeTab === "tab2",
+						})}
+						onClick={() => {
+							toggle("tab2");
+						}}
+					>
+						TAB 2
+					</NavLink>
+				</NavItem>
+			</Nav>
+			<TabContent activeTab={activeTab}>
+				<TabPane tabId="tab1" className="bg-white h-100">
+					<Row>
+						<Col sm="12" className="p-4">
+							<BankDetails />
+						</Col>
+					</Row>
+				</TabPane>
+				<TabPane tabId="tab2" className="bg-white">
+					<Row>
+						<Col sm="12" className="p-4">
+							<UserVisitedBankDetails />
+						</Col>
+					</Row>
+				</TabPane>
+			</TabContent>
 		</Card>
 	);
 }
