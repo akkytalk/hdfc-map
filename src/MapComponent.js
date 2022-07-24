@@ -1,65 +1,47 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useRef, useState } from "react";
 import {
   useJsApiLoader,
   GoogleMap,
   Marker,
   Autocomplete,
-  DirectionsRenderer,
 } from "@react-google-maps/api";
 import { CircularProgress } from "@mui/material";
-import {
-  Box,
-  Button,
-  ButtonGroup,
-  Stack,
-  IconButton,
-  Input,
-} from "@mui/material";
+import { IconButton } from "@mui/material";
 import NearMeIcon from "@mui/icons-material/NearMe";
-import { Row, Col } from "reactstrap";
-import CancelIcon from "@mui/icons-material/Cancel";
+import { Card } from "reactstrap";
 import SearchIcon from "@mui/icons-material/Search";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
-import axios from "axios";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import SwitchInput from "./component/SwitchInput";
+import { connect } from "react-redux";
+import { useDispatch } from "react-redux";
+import { removeBankData, setBank } from "./redux/nearByBanks";
 
-function MapComponent() {
+function MapComponent(props) {
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: "AIzaSyC68H9SdF9KiJWStgwPugHIgY_IILwefRo",
     libraries: ["places"],
   });
-  const center = { lat: 48.8584, lng: 2.2945 };
+
+  const dispatch = useDispatch();
 
   const [map, setMap] = useState(/** @type google.maps.Map */ (null));
-  const [directionsResponse, setDirectionsResponse] = useState(null);
-  const [distance, setDistance] = useState("");
-  const [duration, setDuration] = useState("");
+
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [address, setAddress] = useState("");
 
   /** @type React.MutableRefObject<HTMLInputElement> */
   const originRef = useRef();
-  /** @type React.MutableRefObject<HTMLInputElement> */
-  const destiantionRef = useRef();
 
   useEffect(() => {
-    if (latitude && longitude) {
-      axios
-        .get(
-          `https://us-central1-react-hook-dfacb.cloudfunctions.net/placesNearby?lat=${latitude}&lng=${longitude}&radius=1000`
-        )
-        .then((res) => {
-          console.log("Restant res", res);
-          return res.json();
-        })
-        .catch((err) => {
-          console.log("Error", err);
-        });
+    getMyLocation();
+    if (window.location.reload) {
+      dispatch(removeBankData());
     }
-  }, [latitude, longitude]);
-
-  if (!isLoaded) {
-    return <CircularProgress />;
-  }
+  }, []);
 
   // get my current location
   const getMyLocation = () => {
@@ -73,9 +55,12 @@ function MapComponent() {
             lat: latitude,
             lng: longitude,
           };
+
           setMap((map) => {
             if (map) {
               map.setCenter(myLocation);
+              map.panTo(myLocation);
+              map.setZoom(14);
             }
             return map;
           });
@@ -87,139 +72,183 @@ function MapComponent() {
     }
   };
 
-  // get my current location with Marker
+  const getAddressDetails = (latitude, longitude) => {
+    let query = "https://maps.googleapis.com/maps/api/geocode/json?";
+    query += "latlng=" + latitude + "," + longitude;
+    query += "&sensor=true";
+    query += "&key=" + process.env.REACT_APP_API_KEY;
 
-  async function calculateRoute() {
-    if (originRef.current.value === "" || destiantionRef.current.value === "") {
-      return;
+    fetch(query)
+      .then((response) => response.json())
+      .then((contents) => {
+        console.log("contents", contents);
+        setAddress(contents?.results[0]?.formatted_address);
+      })
+      .catch(() => {
+        console.log("Can’t access " + query + " response. Blocked by browser?");
+      });
+  };
+
+  const withCurrentLocation = (callback) => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // check if callback is a function
+          if (typeof callback === "function") {
+            const { latitude, longitude } = position.coords;
+            callback(latitude, longitude);
+          }
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
     }
-    // eslint-disable-next-line no-undef
-    const directionsService = new google.maps.DirectionsService();
-    const results = await directionsService.route({
-      origin: originRef.current.value,
-      destination: destiantionRef.current.value,
-      // eslint-disable-next-line no-undef
-      travelMode: google.maps.TravelMode.DRIVING,
+  };
+
+  const getNearbyBanks = async () => {
+    setLoading(true);
+
+    withCurrentLocation((lat, lng) => {
+      setLatitude(lat);
+      setLongitude(lng);
+      getAddressDetails(lat, lng);
+      let query =
+        "https://maps.googleapis.com/maps/api/place/nearbysearch/json?";
+      query += "location=" + lat + "," + lng;
+      query += "&radius=5000";
+      query += "&types=bank";
+      query += "&sensor=true";
+      query += "&name=hdfc";
+      query += "&key=" + process.env.REACT_APP_API_KEY;
+
+      const proxyurl = "https://cors-anywhere.herokuapp.com/";
+      fetch(proxyurl + query)
+        .then((response) => response.json())
+        .then((contents) => {
+          const result = contents.results.map((bank) => {
+            return { ...bank, checked: false };
+          });
+
+          dispatch(setBank(result));
+          setLoading(false);
+        })
+        .catch(() => {
+          console.log(
+            "Can’t access " + query + " response. Blocked by browser?"
+          );
+          setLoading(false);
+        });
     });
-    setDirectionsResponse(results);
-    console.log("results", results);
-    setDistance(results.routes[0].legs[0].distance.text);
-    setDuration(results.routes[0].legs[0].duration.text);
-  }
+  };
 
-  function clearRoute() {
-    setDirectionsResponse(null);
-    setDistance("");
-    setDuration("");
-    originRef.current.value = "";
-    destiantionRef.current.value = "";
+  if (!isLoaded) {
+    return <CircularProgress />;
   }
-
   return (
     <>
       <Autocomplete>
         <div className="header__search">
           <div className="header__searchContainer">
-            <input placeholder="Current Location" type="text" ref={originRef} />
+            <input
+              placeholder="Current Location"
+              value={address}
+              type="text"
+              onChange={(e) => {
+                setAddress(e.target.value);
+              }}
+            />
             <IconButton>
               <SearchIcon />
             </IconButton>
           </div>
-          <IconButton onClick={getMyLocation}>
-            <MyLocationIcon color="info" />
-          </IconButton>
           <IconButton
             onClick={() => {
-              setLatitude(48.8584);
-              setLongitude(2.2945);
-              map.panTo({ lat: latitude, lng: longitude });
-              map.setZoom(16);
+              getNearbyBanks();
+            }}
+          >
+            <MyLocationIcon color="info" />
+          </IconButton>
+          {/* <IconButton
+            onClick={() => {
+              setLatitude(19.089119798005967);
+              setLongitude(72.88511843760794);
             }}
           >
             <NearMeIcon color="info" />
-          </IconButton>
+          </IconButton> */}
         </div>
       </Autocomplete>
       <div className="map">
-        <GoogleMap
-          center={center}
-          zoom={15}
-          mapContainerStyle={{ width: "100%", height: "100%" }}
-          options={{
-            zoomControl: false,
-            streetViewControl: false,
-            mapTypeControl: false,
-            fullscreenControl: false,
-          }}
-          onLoad={(map) => setMap(map)}
-        >
-          <Marker
-            position={{ lat: Number(latitude), lng: Number(longitude) }}
-            map={map}
-          />
-
-          {directionsResponse && (
-            <DirectionsRenderer directions={directionsResponse} />
-          )}
-        </GoogleMap>
-      </div>
-      {/* <Row className="form-group p-3">
-        <Col md={4}>
-          <Autocomplete>
-            <input
-              type="text"
-              placeholder="Origin"
-              ref={originRef}
-              className="map__input"
-            />
-          </Autocomplete>
-        </Col>
-        <Col md={4}>
-          <Autocomplete>
-            <input
-              type="text"
-              placeholder="Destination"
-              ref={destiantionRef}
-              className="map__input"
-            />
-          </Autocomplete>
-        </Col>
-        <Col md={4} className="mt-2">
-          <ButtonGroup>
-            <Button
-              type="submit"
-              variant="contained"
-              color="success"
-              onClick={calculateRoute}
-            >
-              Calculate Route
-            </Button>
-            <IconButton onClick={clearRoute}>
-              <CancelIcon color="error" />
-            </IconButton>
-          </ButtonGroup>
-        </Col>
-      </Row>
-      <Row className="form-group p-2">
-        <Col md={4}>
-          <div>Distance: {distance} </div>
-        </Col>
-        <Col md={4}>
-          <div>Duration: {duration} </div>
-        </Col>
-        <Col md={4}>
-          <IconButton
-            onClick={() => {
-              map.panTo(center);
-              map.setZoom(15);
+        {loading ? (
+          <div className="d-flex justify-content-center align-items-center h-100">
+            <CircularProgress />
+          </div>
+        ) : (
+          <GoogleMap
+            center={{ lat: Number(latitude), lng: Number(longitude) }}
+            zoom={14}
+            mapContainerStyle={{ width: "100%", height: "100%" }}
+            options={{
+              zoomControl: false,
+              streetViewControl: true,
+              mapTypeControl: true,
+              fullscreenControl: true,
             }}
+            onLoad={(map) => setMap(map)}
           >
-            <NearMeIcon color="info" />
-          </IconButton>
-        </Col>
-      </Row> */}
+            <Marker
+              position={{ lat: Number(latitude), lng: Number(longitude) }}
+              map={map}
+            />
+            {props.bank.length > 0 &&
+              props.bank.map((bank, index) => {
+                return (
+                  <Marker
+                    key={index}
+                    position={{
+                      lat: bank.geometry.location.lat,
+                      lng: bank.geometry.location.lng,
+                    }}
+                    map={map}
+                  />
+                );
+              })}
+          </GoogleMap>
+        )}
+      </div>
+      <label className="pt-2 pb-2">Branch Name Address</label>
+      <div className="bank-details">
+        {props.bank?.length > 0
+          ? props.bank.map((bank, index) => {
+              return (
+                <Card className="m-2  p-2 rounded" key={index}>
+                  <div className="d-flex justify-content-between align-items-center">
+                    <h6>{bank.name}</h6>
+                    <FormControlLabel
+                      control={
+                        <SwitchInput
+                          index={index}
+                          key={index}
+                          bank={bank}
+                          name={`nearByBanks.${index}.checked`}
+                        />
+                      }
+                      label=""
+                    />
+                  </div>
+                  <p>{bank.vicinity}</p>
+                </Card>
+              );
+            })
+          : "No Banks Found"}
+      </div>
     </>
   );
 }
-
-export default MapComponent;
+const mapStateToProps = (state) => {
+  return {
+    bank: state.bank,
+  };
+};
+export default connect(mapStateToProps)(MapComponent);
